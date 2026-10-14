@@ -216,6 +216,11 @@ public:
 	void handleCommand_Camera(NetworkPacket* pkt);
 	// ARACDIA: server-controlled pause menu fallback (see networkprotocol.h, v53).
 	void handleCommand_ShowNativePauseMenu(NetworkPacket *pkt);
+#if ENABLE_ARACDIA_RMLUI
+	void handleCommand_AracdiaUiOpen(NetworkPacket *pkt);
+	void handleCommand_AracdiaUiUpdate(NetworkPacket *pkt);
+	void handleCommand_AracdiaUiClose(NetworkPacket *pkt);
+#endif
 
 	void ProcessData(NetworkPacket *pkt);
 
@@ -242,6 +247,10 @@ public:
 	// custom formspec via core.show_formspec, or by sending
 	// TOCLIENT_SHOW_NATIVE_PAUSE_MENU back so we open the native menu.
 	void sendPauseMenu();
+#if ENABLE_ARACDIA_RMLUI
+	void sendAracdiaUiAction(const std::string &screen, const std::string &action,
+			const std::string &json_payload);
+#endif
 
 	ClientEnvironment& getEnv() { return m_env; }
 	ITextureSource *tsrc() { return getTextureSource(); }

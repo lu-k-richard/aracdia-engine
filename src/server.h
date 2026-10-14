@@ -243,6 +243,7 @@ public:
 	void handleCommand_UpdateClientInfo(NetworkPacket *pkt);
 	// ARACDIA: server-controlled pause menu (see networkprotocol.h, v53).
 	void handleCommand_PauseMenu(NetworkPacket *pkt);
+	void handleCommand_AracdiaUiAction(NetworkPacket *pkt);
 
 	void ProcessData(NetworkPacket *pkt);
 
@@ -368,6 +369,11 @@ public:
 	void addShutdownError(const ModError &e);
 
 	bool showFormspec(const char *name, const std::string &formspec, const std::string &formname);
+#if ENABLE_ARACDIA_RMLUI
+	bool openAracdiaUi(const char *playername, const std::string &screen,
+			const std::string &json_state);
+	bool closeAracdiaUi(const char *playername, const std::string &screen);
+#endif
 	Map &getMap();
 	ServerEnvironment & getEnv() { return *m_env; }
 	v3f findSpawnPos();
@@ -552,6 +558,13 @@ private:
 	void SendPlayerFormspecPrepend(session_t peer_id);
 	void SendShowFormspecMessage(session_t peer_id, const std::string &formspec,
 		const std::string &formname);
+#if ENABLE_ARACDIA_RMLUI
+	void SendAracdiaUiOpen(session_t peer_id, const std::string &screen,
+			const std::string &json_state);
+	void SendAracdiaUiUpdate(session_t peer_id, const std::string &screen,
+			const std::string &json_state);
+	void SendAracdiaUiClose(session_t peer_id, const std::string &screen);
+#endif
 	void SendHUDAdd(session_t peer_id, u32 id, HudElement *form);
 	void SendHUDRemove(session_t peer_id, u32 id);
 	void SendHUDChange(session_t peer_id, u32 id, HudElementStat stat, void *value);

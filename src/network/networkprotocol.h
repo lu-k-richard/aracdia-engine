@@ -717,7 +717,25 @@ enum ToClientCommand : u16
 		(no payload)
 	*/
 
-	TOCLIENT_NUM_MSG_TYPES = 0x66,
+	// ARACDIA: native RmlUi screen open (protocol 54+).
+	TOCLIENT_ARACDIA_UI_OPEN = 0x66,
+	/*
+		std::string screen
+		std::string json_state
+	*/
+
+	TOCLIENT_ARACDIA_UI_UPDATE = 0x67,
+	/*
+		std::string screen
+		std::string json_state
+	*/
+
+	TOCLIENT_ARACDIA_UI_CLOSE = 0x68,
+	/*
+		std::string screen (empty closes all screens)
+	*/
+
+	TOCLIENT_NUM_MSG_TYPES = 0x69,
 };
 
 enum ToServerCommand : u16
@@ -933,7 +951,15 @@ enum ToServerCommand : u16
 		(no payload)
 	*/
 
-	TOSERVER_NUM_MSG_TYPES = 0x55,
+	// ARACDIA: player interacted with a native RmlUi screen (protocol 54+).
+	TOSERVER_ARACDIA_UI_ACTION = 0x55,
+	/*
+		std::string screen
+		std::string action
+		std::string json_payload
+	*/
+
+	TOSERVER_NUM_MSG_TYPES = 0x56,
 };
 
 enum AuthMechanism

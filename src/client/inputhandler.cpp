@@ -14,6 +14,31 @@
 #include "config.h"
 #if ENABLE_ARACDIA_RMLUI
 #include "client/aracdia/rmlui_manager.h"
+#include <Keycodes.h>
+
+namespace {
+
+/// Mac laptops often map F8/F9 to system actions (brightness, etc.) unless Fn
+/// is held. Provide chord shortcuts that work reliably on all platforms.
+bool is_aracdia_ui_toggle_shortcut(const SEvent &event)
+{
+	if (event.EventType != EET_KEY_INPUT_EVENT || !event.KeyInput.PressedDown)
+		return false;
+	if (event.KeyInput.Key != KEY_KEY_U)
+		return false;
+	return event.KeyInput.Control && event.KeyInput.Shift;
+}
+
+bool is_aracdia_ui_overlay_shortcut(const SEvent &event)
+{
+	if (event.EventType != EET_KEY_INPUT_EVENT || !event.KeyInput.PressedDown)
+		return false;
+	if (event.KeyInput.Key != KEY_KEY_O)
+		return false;
+	return event.KeyInput.Control && event.KeyInput.Shift;
+}
+
+} // namespace
 #endif
 
 void MyEventReceiver::reloadKeybindings()
@@ -154,15 +179,31 @@ bool MyEventReceiver::OnEvent(const SEvent &event)
 		return true;
 	}
 
-	// This is separate from other keyboard handling so that it also works in menus.
+	// Aracdia native UI dev shortcuts and input capture (Phase C.1).
 	if (event.EventType == EET_KEY_INPUT_EVENT) {
+		KeyPress keyCode(event.KeyInput);
+		// Always track physical key state before UI capture (Esc release while
+		// the overlay is open must clear keyIsDown / esc_down).
+		setKeyDown(keyCode, event.KeyInput.PressedDown);
+
 #if ENABLE_ARACDIA_RMLUI
-		if (event.KeyInput.Key == KEY_F8 && event.KeyInput.PressedDown) {
-			AracdiaRmlUiManager::get().toggleVisible();
+		auto &aracdia_ui = AracdiaRmlUiManager::get();
+		if ((event.KeyInput.Key == KEY_F8 || is_aracdia_ui_toggle_shortcut(event))
+				&& event.KeyInput.PressedDown) {
+			aracdia_ui.toggleDevSpike();
+			return true;
+		}
+		if ((event.KeyInput.Key == KEY_F9 || is_aracdia_ui_overlay_shortcut(event))
+				&& event.KeyInput.PressedDown) {
+			if (aracdia_ui.isActive())
+				aracdia_ui.pushScreen("overlay");
+			return true;
+		}
+		if (aracdia_ui.isActive()) {
+			aracdia_ui.processEvent(event);
 			return true;
 		}
 #endif
-		KeyPress keyCode(event.KeyInput);
 
 		if (keySettingHasMatch("keymap_fullscreen", keyCode)) {
 			if (event.KeyInput.PressedDown && !fullscreen_is_down) {
@@ -195,6 +236,18 @@ bool MyEventReceiver::OnEvent(const SEvent &event)
 	else if (event.EventType == EET_TOUCH_INPUT_EVENT)
 		last_pointer_type = PointerType::Touch;
 
+#if ENABLE_ARACDIA_RMLUI
+	if (AracdiaRmlUiManager::get().isActive()) {
+		if (g_touchcontrols)
+			g_touchcontrols->setVisible(false);
+		if (AracdiaRmlUiManager::get().processEvent(event))
+			return true;
+		// Consume mouse motion while UI is open even if RmlUi did not handle it.
+		if (event.EventType == EET_MOUSE_INPUT_EVENT)
+			return true;
+	}
+#endif
+
 	// Let the menu handle events, if one is active.
 	if (isMenuActive()) {
 		if (g_touchcontrols)
@@ -202,11 +255,9 @@ bool MyEventReceiver::OnEvent(const SEvent &event)
 		return g_menumgr.preprocessEvent(event);
 	}
 
-	// Remember whether each key is down or up
+	// Remember whether each key is down or up (mouse / joystick; keys handled above).
 	if (event.EventType == EET_KEY_INPUT_EVENT) {
-		KeyPress keyCode(event.KeyInput);
-		if (setKeyDown(keyCode, event.KeyInput.PressedDown))
-			return true;
+		// Key state already updated before Aracdia UI capture.
 	} else if (g_touchcontrols && event.EventType == EET_TOUCH_INPUT_EVENT) {
 		// In case of touchcontrols, we have to handle different events
 		g_touchcontrols->translateEvent(event);

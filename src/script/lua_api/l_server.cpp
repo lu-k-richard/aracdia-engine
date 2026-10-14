@@ -18,6 +18,12 @@
 #include "scripting_server.h"
 #include "server.h"
 #include "serverenvironment.h"
+#include "convert_json.h"
+#include "lua_api/l_object.h"
+#include "config.h"
+#include "server/player_sao.h"
+#include "remoteplayer.h"
+#include <json/json.h>
 
 #include <algorithm>
 
@@ -409,6 +415,57 @@ int ModApiServer::l_show_formspec(lua_State *L)
 	return 1;
 }
 
+#if ENABLE_ARACDIA_RMLUI
+// open_aracdia_ui(player, screen, state_table)
+int ModApiServer::l_open_aracdia_ui(lua_State *L)
+{
+	NO_MAP_LOCK_REQUIRED;
+	ObjectRef *ref = checkObject<ObjectRef>(L, 1);
+	ServerActiveObject *sao = ObjectRef::getobject(ref);
+	if (!sao || sao->getType() != ACTIVEOBJECT_TYPE_PLAYER) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	RemotePlayer *player = static_cast<PlayerSAO *>(sao)->getPlayer();
+
+	const char *screen = luaL_checkstring(L, 2);
+	Json::Value state;
+	if (!lua_isnoneornil(L, 3)) {
+		try {
+			read_json_value(L, state, 3, 1024);
+		} catch (SerializationError &e) {
+			lua_pushboolean(L, false);
+			return 1;
+		}
+	}
+
+	const std::string json_state = fastWriteJson(state);
+	lua_pushboolean(L, getServer(L)->openAracdiaUi(player->getName().c_str(),
+			screen, json_state));
+	return 1;
+}
+
+// close_aracdia_ui(player[, screen])
+int ModApiServer::l_close_aracdia_ui(lua_State *L)
+{
+	NO_MAP_LOCK_REQUIRED;
+	ObjectRef *ref = checkObject<ObjectRef>(L, 1);
+	ServerActiveObject *sao = ObjectRef::getobject(ref);
+	if (!sao || sao->getType() != ACTIVEOBJECT_TYPE_PLAYER) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	RemotePlayer *player = static_cast<PlayerSAO *>(sao)->getPlayer();
+
+	std::string screen;
+	if (!lua_isnoneornil(L, 2))
+		screen = readParam<std::string>(L, 2);
+
+	lua_pushboolean(L, getServer(L)->closeAracdiaUi(player->getName().c_str(), screen));
+	return 1;
+}
+#endif // ENABLE_ARACDIA_RMLUI
+
 // get_current_modname()
 int ModApiServer::l_get_current_modname(lua_State *L)
 {
@@ -700,6 +757,10 @@ void ModApiServer::Initialize(lua_State *L, int top)
 	API_FCT(chat_send_all);
 	API_FCT(chat_send_player);
 	API_FCT(show_formspec);
+#if ENABLE_ARACDIA_RMLUI
+	API_FCT(open_aracdia_ui);
+	API_FCT(close_aracdia_ui);
+#endif
 	API_FCT(sound_play);
 	API_FCT(sound_stop);
 	API_FCT(sound_fade);

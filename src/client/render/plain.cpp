@@ -60,8 +60,10 @@ void DrawHUD::run(PipelineContext &context)
 	auto *driver = context.device->getVideoDriver();
 	if (driver) {
 		auto &rmlui = AracdiaRmlUiManager::get();
-		rmlui.init(driver);
-		rmlui.render();
+		if (rmlui.isActive()) {
+			rmlui.syncViewport(driver);
+			rmlui.render();
+		}
 	}
 #endif
 }

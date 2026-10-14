@@ -1866,3 +1866,28 @@ void Server::handleCommand_PauseMenu(NetworkPacket *pkt)
 		Send(&reply);
 	}
 }
+
+#if ENABLE_ARACDIA_RMLUI
+void Server::handleCommand_AracdiaUiAction(NetworkPacket *pkt)
+{
+	session_t peer_id = pkt->getPeerId();
+	RemotePlayer *player = m_env->getPlayer(peer_id);
+	if (!player) {
+		warningstream << FUNCTION_NAME << ": player is null" << std::endl;
+		return;
+	}
+	PlayerSAO *playersao = player->getPlayerSAO();
+	if (!playersao) {
+		warningstream << FUNCTION_NAME << ": player SAO is null" << std::endl;
+		return;
+	}
+
+	std::string screen;
+	std::string action;
+	std::string payload;
+	*pkt >> screen >> action;
+	payload = pkt->readLongString();
+
+	m_script->on_aracdia_ui_action(playersao, screen, action, payload);
+}
+#endif // ENABLE_ARACDIA_RMLUI

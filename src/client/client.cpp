@@ -1550,6 +1550,17 @@ void Client::sendPauseMenu()
 	Send(&pkt);
 }
 
+#if ENABLE_ARACDIA_RMLUI
+void Client::sendAracdiaUiAction(const std::string &screen, const std::string &action,
+		const std::string &json_payload)
+{
+	NetworkPacket pkt(TOSERVER_ARACDIA_UI_ACTION, 0);
+	pkt << screen << action;
+	pkt.putLongString(json_payload);
+	Send(&pkt);
+}
+#endif
+
 void Client::removeNode(v3s16 p)
 {
 	std::map<v3s16, MapBlock*> modified_blocks;

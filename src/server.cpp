@@ -1652,6 +1652,70 @@ void Server::SendShowFormspecMessage(session_t peer_id, const std::string &forms
 	Send(&pkt);
 }
 
+#if ENABLE_ARACDIA_RMLUI
+static constexpr u16 ARACDIA_UI_PROTOCOL_VERSION = 54;
+
+void Server::SendAracdiaUiOpen(session_t peer_id, const std::string &screen,
+		const std::string &json_state)
+{
+	NetworkPacket pkt(TOCLIENT_ARACDIA_UI_OPEN, 0, peer_id);
+	pkt << screen;
+	pkt.putLongString(json_state);
+	Send(&pkt);
+}
+
+void Server::SendAracdiaUiUpdate(session_t peer_id, const std::string &screen,
+		const std::string &json_state)
+{
+	NetworkPacket pkt(TOCLIENT_ARACDIA_UI_UPDATE, 0, peer_id);
+	pkt << screen;
+	pkt.putLongString(json_state);
+	Send(&pkt);
+}
+
+void Server::SendAracdiaUiClose(session_t peer_id, const std::string &screen)
+{
+	NetworkPacket pkt(TOCLIENT_ARACDIA_UI_CLOSE, 0, peer_id);
+	pkt << screen;
+	Send(&pkt);
+}
+
+bool Server::openAracdiaUi(const char *playername, const std::string &screen,
+		const std::string &json_state)
+{
+	if (!m_env || screen.empty())
+		return false;
+
+	RemotePlayer *player = m_env->getPlayer(playername);
+	if (!player)
+		return false;
+
+	session_t peer_id = player->getPeerId();
+	if (m_clients.getProtocolVersion(peer_id) < ARACDIA_UI_PROTOCOL_VERSION)
+		return false;
+
+	SendAracdiaUiOpen(peer_id, screen, json_state);
+	return true;
+}
+
+bool Server::closeAracdiaUi(const char *playername, const std::string &screen)
+{
+	if (!m_env)
+		return false;
+
+	RemotePlayer *player = m_env->getPlayer(playername);
+	if (!player)
+		return false;
+
+	session_t peer_id = player->getPeerId();
+	if (m_clients.getProtocolVersion(peer_id) < ARACDIA_UI_PROTOCOL_VERSION)
+		return false;
+
+	SendAracdiaUiClose(peer_id, screen);
+	return true;
+}
+#endif // ENABLE_ARACDIA_RMLUI
+
 void Server::SendSpawnParticles(RemotePlayer *player,
 		const std::vector<ParticleParameters> &particles)
 {

@@ -44,6 +44,8 @@ public:
 	// expected to fall back to the engine's native pause menu when this
 	// returns false.
 	bool on_pause_menu(ServerActiveObject *player);
+	bool on_aracdia_ui_action(ServerActiveObject *player, const std::string &screen,
+			const std::string &action, const std::string &payload_json);
 
 	// Player inventory callbacks
 	// Return number of accepted items to be moved

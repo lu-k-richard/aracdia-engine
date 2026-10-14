@@ -85,10 +85,15 @@
 		is pressed in-game; it asks the server, which can either show a
 		custom formspec via core.register_on_pause_menu or fall back to the
 		native menu via TOCLIENT_SHOW_NATIVE_PAUSE_MENU.
+	PROTOCOL VERSION 54
+		ARACDIA: native in-game UI (RmlUi).
+		Added TOCLIENT_ARACDIA_UI_{OPEN,UPDATE,CLOSE} and
+		TOSERVER_ARACDIA_UI_ACTION for server-driven screens and
+		core.open_aracdia_ui / core.register_on_aracdia_ui_action.
 */
 
 // Note: Also update core.protocol_versions in builtin when bumping
-const u16 LATEST_PROTOCOL_VERSION = 53;
+const u16 LATEST_PROTOCOL_VERSION = 54;
 
 // See also formspec [Version History] in doc/lua_api.md
 const u16 FORMSPEC_API_VERSION = 10;

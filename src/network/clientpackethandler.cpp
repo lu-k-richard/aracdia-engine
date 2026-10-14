@@ -990,6 +990,48 @@ void Client::handleCommand_ShowNativePauseMenu(NetworkPacket *pkt)
 	m_client_event_queue.push(event);
 }
 
+#if ENABLE_ARACDIA_RMLUI
+void Client::handleCommand_AracdiaUiOpen(NetworkPacket *pkt)
+{
+	std::string screen;
+	std::string json_state;
+	*pkt >> screen;
+	json_state = pkt->readLongString();
+
+	ClientEvent *event = new ClientEvent();
+	event->type = CE_ARACDIA_UI_OPEN;
+	event->aracdia_ui.screen = new std::string(std::move(screen));
+	event->aracdia_ui.json_state = new std::string(std::move(json_state));
+	m_client_event_queue.push(event);
+}
+
+void Client::handleCommand_AracdiaUiUpdate(NetworkPacket *pkt)
+{
+	std::string screen;
+	std::string json_state;
+	*pkt >> screen;
+	json_state = pkt->readLongString();
+
+	ClientEvent *event = new ClientEvent();
+	event->type = CE_ARACDIA_UI_UPDATE;
+	event->aracdia_ui.screen = new std::string(std::move(screen));
+	event->aracdia_ui.json_state = new std::string(std::move(json_state));
+	m_client_event_queue.push(event);
+}
+
+void Client::handleCommand_AracdiaUiClose(NetworkPacket *pkt)
+{
+	std::string screen;
+	*pkt >> screen;
+
+	ClientEvent *event = new ClientEvent();
+	event->type = CE_ARACDIA_UI_CLOSE;
+	event->aracdia_ui.screen = new std::string(std::move(screen));
+	event->aracdia_ui.json_state = nullptr;
+	m_client_event_queue.push(event);
+}
+#endif // ENABLE_ARACDIA_RMLUI
+
 void Client::handleCommand_SpawnParticle(NetworkPacket* pkt)
 {
 	std::string datastring(pkt->getString(0), pkt->getSize());

@@ -279,6 +279,11 @@ private:
 	void handleClientEvent_UpdateCamera(ClientEvent *event, CameraOrientation *cam);
 	// ARACDIA: server-controlled pause menu fallback (see networkprotocol.h, v53).
 	void handleClientEvent_ShowNativePauseMenu(ClientEvent *event, CameraOrientation *cam);
+#if ENABLE_ARACDIA_RMLUI
+	void handleClientEvent_AracdiaUiOpen(ClientEvent *event, CameraOrientation *cam);
+	void handleClientEvent_AracdiaUiUpdate(ClientEvent *event, CameraOrientation *cam);
+	void handleClientEvent_AracdiaUiClose(ClientEvent *event, CameraOrientation *cam);
+#endif
 
 	void updateChat(f32 dtime);
 

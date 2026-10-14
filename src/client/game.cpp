@@ -474,6 +474,18 @@ bool Game::startup(volatile std::sig_atomic_t *kill,
 
 	m_game_formspec.init(client, m_rendering_engine, input);
 
+#if ENABLE_ARACDIA_RMLUI
+	AracdiaRmlUiManager::get().setActionCallback(
+			[this](const std::string &screen, const std::string &action,
+					const std::string &payload_json) {
+				if (client)
+					client->sendAracdiaUiAction(screen, action, payload_json);
+				// Close non-destructive screens immediately (SP menu latency).
+				if (action == "resume" || action == "close")
+					AracdiaRmlUiManager::get().closeScreen(screen);
+			});
+#endif
+
 	return true;
 }
 
@@ -600,7 +612,8 @@ void Game::run()
 		updateFrame(&graph, &stats, dtime, cam_view);
 		updateProfilerGraphs(&graph);
 
-		if (m_does_lost_focus_pause_game && !device->isWindowFocused() && !isMenuActive()) {
+		if (m_does_lost_focus_pause_game && !device->isWindowFocused()
+				&& !isMenuActive() && !isAracdiaUiCapturingInput()) {
 			m_game_formspec.showPauseMenu();
 		}
 	}
@@ -1378,7 +1391,8 @@ void Game::processUserInput(f32 dtime)
 	}
 
 	// Reset input if window not active or some menu is active
-	if (!device->isWindowActive() || isMenuActive() || guienv->hasFocus(gui_chat_console.get())) {
+	if (!device->isWindowActive() || isMenuActive() || isAracdiaUiCapturingInput()
+			|| guienv->hasFocus(gui_chat_console.get())) {
 		if (m_game_focused) {
 			m_game_focused = false;
 			infostream << "Game lost focus" << std::endl;
@@ -1958,10 +1972,11 @@ void Game::updateCameraDirection(CameraOrientation *cam, float dtime)
 	this results in duplicated input. To avoid that, we don't enable relative
 	mouse mode if we're in touchscreen mode. */
 	if (cur_control)
-		cur_control->setRelativeMode(!g_touchcontrols && !isMenuActive());
+		cur_control->setRelativeMode(!g_touchcontrols && !isMenuActive()
+				&& !isAracdiaUiCapturingInput());
 
 	if ((device->isWindowActive() && device->isWindowFocused()
-			&& !isMenuActive()) || input->isRandom()) {
+			&& !isMenuActive() && !isAracdiaUiCapturingInput()) || input->isRandom()) {
 
 		if (cur_control && !input->isRandom()) {
 			// Mac OSX gets upset if this is set every frame
@@ -2209,6 +2224,11 @@ const ClientEventHandler Game::clientEventHandler[CLIENTEVENT_MAX] = {
 	// ARACDIA: server-controlled pause menu fallback (must be in the same
 	// order as ClientEventType in clientevent.h).
 	{&Game::handleClientEvent_ShowNativePauseMenu},
+#if ENABLE_ARACDIA_RMLUI
+	{&Game::handleClientEvent_AracdiaUiOpen},
+	{&Game::handleClientEvent_AracdiaUiUpdate},
+	{&Game::handleClientEvent_AracdiaUiClose},
+#endif
 };
 
 void Game::handleClientEvent_None(ClientEvent *event, CameraOrientation *cam)
@@ -2302,6 +2322,33 @@ void Game::handleClientEvent_ShowNativePauseMenu(ClientEvent *event, CameraOrien
 		return;
 	m_game_formspec.showPauseMenu();
 }
+
+#if ENABLE_ARACDIA_RMLUI
+void Game::handleClientEvent_AracdiaUiOpen(ClientEvent *event, CameraOrientation *cam)
+{
+	(void)cam;
+	auto &ui = AracdiaRmlUiManager::get();
+	ui.openFromServer(*event->aracdia_ui.screen, *event->aracdia_ui.json_state);
+	delete event->aracdia_ui.screen;
+	delete event->aracdia_ui.json_state;
+}
+
+void Game::handleClientEvent_AracdiaUiUpdate(ClientEvent *event, CameraOrientation *cam)
+{
+	(void)cam;
+	auto &ui = AracdiaRmlUiManager::get();
+	ui.updateFromServer(*event->aracdia_ui.screen, *event->aracdia_ui.json_state);
+	delete event->aracdia_ui.screen;
+	delete event->aracdia_ui.json_state;
+}
+
+void Game::handleClientEvent_AracdiaUiClose(ClientEvent *event, CameraOrientation *cam)
+{
+	(void)cam;
+	AracdiaRmlUiManager::get().closeFromServer(*event->aracdia_ui.screen);
+	delete event->aracdia_ui.screen;
+}
+#endif // ENABLE_ARACDIA_RMLUI
 
 void Game::handleClientEvent_HandleParticleEvent(ClientEvent *event,
 		CameraOrientation *cam)

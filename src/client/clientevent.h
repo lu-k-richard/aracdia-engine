@@ -40,6 +40,9 @@ enum ClientEventType : u8
 	// ARACDIA: server fallback signal — open the engine's native pause menu
 	// because no Lua handler claimed the TOSERVER_PAUSE_MENU request.
 	CE_SHOW_NATIVE_PAUSE_MENU,
+	CE_ARACDIA_UI_OPEN,
+	CE_ARACDIA_UI_UPDATE,
+	CE_ARACDIA_UI_CLOSE,
 	CLIENTEVENT_MAX,
 };
 
@@ -130,5 +133,10 @@ struct ClientEvent
 		SunParams *sun_params;
 		MoonParams *moon_params;
 		StarParams *star_params;
+		struct
+		{
+			std::string *screen;
+			std::string *json_state;
+		} aracdia_ui;
 	};
 };

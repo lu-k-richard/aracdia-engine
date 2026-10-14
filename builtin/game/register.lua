@@ -627,6 +627,10 @@ core.registered_on_mapblocks_changed, core.register_on_mapblocks_changed = make_
 -- native pause menu on that client.
 core.registered_on_pause_menus, core.register_on_pause_menu = make_registration()
 
+-- ARACDIA: native RmlUi UI actions (see networkprotocol.h, v54).
+-- Handler(player, screen, action, payload_table) -> true if handled.
+core.registered_on_aracdia_ui_actions, core.register_on_aracdia_ui_action = make_registration()
+
 -- A bunch of registrations are read by the C++ side once on env init, so we cannot
 -- allow them to change afterwards (see s_env.cpp).
 -- Nodes and items do not have this problem but there are obvious consistency

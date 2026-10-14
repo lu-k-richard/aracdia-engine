@@ -97,6 +97,8 @@ const ToServerCommandHandler toServerCommandTable[TOSERVER_NUM_MSG_TYPES] =
 	{ "TOSERVER_UPDATE_CLIENT_INFO",       TOSERVER_STATE_INGAME, &Server::handleCommand_UpdateClientInfo }, // 0x53
 	// ARACDIA: server-controlled pause menu (see networkprotocol.h, version 53)
 	{ "TOSERVER_PAUSE_MENU",               TOSERVER_STATE_INGAME, &Server::handleCommand_PauseMenu }, // 0x54
+	// ARACDIA: native RmlUi UI action (see networkprotocol.h, version 54)
+	{ "TOSERVER_ARACDIA_UI_ACTION",        TOSERVER_STATE_INGAME, &Server::handleCommand_AracdiaUiAction }, // 0x55
 };
 
 const static ClientCommandFactory null_command_factory = { nullptr, 0, false };
@@ -217,4 +219,8 @@ const ClientCommandFactory clientCommandFactoryTable[TOCLIENT_NUM_MSG_TYPES] =
 	{ "TOCLIENT_SPAWN_PARTICLE_BATCH",     0, true }, // 0x64
 	// ARACDIA: server-controlled pause menu fallback (see networkprotocol.h, version 53)
 	{ "TOCLIENT_SHOW_NATIVE_PAUSE_MENU",   0, true }, // 0x65
+	// ARACDIA: native RmlUi screens (see networkprotocol.h, version 54)
+	{ "TOCLIENT_ARACDIA_UI_OPEN",          0, true }, // 0x66
+	{ "TOCLIENT_ARACDIA_UI_UPDATE",        0, true }, // 0x67
+	{ "TOCLIENT_ARACDIA_UI_CLOSE",         0, true }, // 0x68
 };

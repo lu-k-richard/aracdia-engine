@@ -33,8 +33,10 @@ set(ARACDIA_RMLUI_INCLUDES
 )
 
 set(ARACDIA_RMLUI_SOURCES
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/client/aracdia/rmlui_renderer_gl2_luanti.cpp"
 	"${rmlui_SOURCE_DIR}/Backends/RmlUi_Renderer_GL3.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/client/aracdia/rmlui_system_interface.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/client/aracdia/rmlui_input.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/client/aracdia/rmlui_manager.cpp"
 )
 

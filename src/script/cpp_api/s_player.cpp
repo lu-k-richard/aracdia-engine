@@ -10,6 +10,11 @@
 #include "lua_api/l_inventory.h"
 #include "lua_api/l_item.h"
 #include "util/string.h"
+#include "convert_json.h"
+#include "common/c_content.h"
+#include <json/json.h>
+
+#include <memory>
 
 void ScriptApiPlayer::on_newplayer(ServerActiveObject *player)
 {
@@ -89,6 +94,41 @@ bool ScriptApiPlayer::on_pause_menu(ServerActiveObject *player)
 	lua_getfield(L, -1, "registered_on_pause_menus");
 	objectrefGetOrCreate(L, player);
 	runCallbacks(1, RUN_CALLBACKS_MODE_OR);
+	return readParam<bool>(L, -1);
+}
+
+// ARACDIA: dispatch core.registered_on_aracdia_ui_action callbacks.
+bool ScriptApiPlayer::on_aracdia_ui_action(ServerActiveObject *player,
+		const std::string &screen, const std::string &action,
+		const std::string &payload_json)
+{
+	SCRIPTAPI_PRECHECKHEADER
+	lua_getglobal(L, "core");
+	lua_getfield(L, -1, "registered_on_aracdia_ui_actions");
+	objectrefGetOrCreate(L, player);
+	lua_pushstring(L, screen.c_str());
+	lua_pushstring(L, action.c_str());
+
+	lua_pushnil(L);
+	const int nullindex = lua_gettop(L);
+	if (payload_json.empty()) {
+		lua_newtable(L);
+	} else {
+		Json::Value root;
+		Json::CharReaderBuilder builder;
+		std::string errmsg;
+		const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+		if (!reader->parse(payload_json.data(), payload_json.data() + payload_json.size(),
+				&root, &errmsg)) {
+			warningstream << "Aracdia UI action payload JSON parse failed: "
+			              << errmsg << std::endl;
+			lua_newtable(L);
+		} else if (!push_json_value(L, root, nullindex)) {
+			lua_newtable(L);
+		}
+	}
+
+	runCallbacks(4, RUN_CALLBACKS_MODE_OR);
 	return readParam<bool>(L, -1);
 }
 
